@@ -3,7 +3,17 @@ import os
 import torch
 import copy
 import sys
+import collections
+import collections.abc
 
+# Patch all the missing classes that attrdict might need
+collections.Mapping = collections.abc.Mapping
+collections.MutableMapping = collections.abc.MutableMapping
+collections.Sequence = collections.abc.Sequence
+
+# Now import attrdict
+from attrdict import AttrDict
+# ... rest of your imports
 sys.path.append(os.path.abspath(os.path.join(os.getcwd(),'..')))
 
 from attrdict import AttrDict
@@ -186,11 +196,18 @@ def evaluate(args, loader, generator, num_samples,sava_path,plot_all=False,tc_na
             aa = torch.cat([real_obs_traj_gt[:,:,:2],real_pred_traj_gt],dim=0).cpu().numpy()
             # if name != 'HALONG2019110800':
             #     continue
-            if getPicName(tc_info[ty_target_id],args) == 0:
-                print('The background image of this TC is not provided. Please try other TC')
+            if args.TC_img_path and os.path.exists(args.TC_img_path):
+                pic_path = args.TC_img_path
+            else:
+                # 2. If not, try the original method
+                pic_path = getPicName(tc_info[ty_target_id], args)
+
+            # 3. If both fail (result is 0), then skip
+            if pic_path == 0:
+                print(f'The background image of this TC is not provided (checked: {args.TC_img_path}). Please try other TC')
                 continue
 
-            bgimg = img.imread(getPicName(tc_info[ty_target_id],args))
+            bgimg = img.imread(pic_path)
             # plotCount += 1
             fig = plt.figure(figsize=(10, 10))
             fig.figimage(bgimg)
@@ -263,7 +280,7 @@ def main(args):
 
         if 'no_' in path or 'pt' not in path:
             continue
-        checkpoint = torch.load(path)
+        checkpoint = torch.load(path, weights_only=False)
         generator = get_generator(checkpoint)
         _args = AttrDict(checkpoint['args'])
         _args.areas = args.areas

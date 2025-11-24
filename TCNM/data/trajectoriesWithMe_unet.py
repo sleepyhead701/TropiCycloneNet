@@ -164,6 +164,8 @@ class TrajectoryDataset(Dataset):
 
         # 迭代读取文件夹中的txt文件
         for path in all_files:
+            if "MALIKSI" not in path:
+                continue
             _,x = os.path.split(path)
             tyname = os.path.splitext(x)[0]
             data = read_file(path, delim)
@@ -374,6 +376,7 @@ class TrajectoryDataset(Dataset):
                       '100v': self.data_root+'/wind_year_V100_centercrop',
                       '100u': self.data_root+'/wind_year_U100_centercrop',
                       }
+        data_dir = os.path.join(modal_path[self.modal_name], area, year, tyname)
         if os.path.exists(os.path.join(modal_path[self.modal_name],area, year, tyname)):
             data_dir = os.path.join(modal_path[self.modal_name], area, year, tyname)
         elif os.path.exists(os.path.join(modal_path[self.modal_name],area, year, tyname2)):
@@ -381,7 +384,7 @@ class TrajectoryDataset(Dataset):
         elif os.path.exists(os.path.join(modal_path[self.modal_name],area, year, tyname3)):
             data_dir = os.path.join(modal_path[self.modal_name], area, year, tyname3)
         else:
-            print(os.path.join(modal_path[self.modal_name],area, year, tyname))
+            print(f"WARNING: Path not found: {data_dir}")
 
 
 
